@@ -1,0 +1,3 @@
+include ':ui'
+include ':example'
+rootProject.name = "UiExample"

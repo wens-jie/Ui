@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.wens.ui.layout.FlowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/flowLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#00ff00"
+    android:maxWidth="190dp"
+    android:minWidth="100dp"
+    android:padding="10dp"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <Button
+        android:id="@+id/randomChildWidth"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:maxWidth="50dp"
+        android:minWidth="200dp"
+        android:padding="10dp"
+        android:text="@string/random_give_child_a_width" />
+
+    <Button
+        android:id="@+id/randomChildHeight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/random_give_child_a_height" />
+
+    <Button
+        android:id="@+id/gravityCenterHorizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/gravity_center_horizontal" />
+
+    <Button
+        android:id="@+id/gravityCenterVertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/gravity_center_vertical" />
+
+    <Button
+        android:id="@+id/gravityTop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/gravity_top" />
+
+    <Button
+        android:id="@+id/gravityBottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/gravity_bottom" />
+
+    <Button
+        android:id="@+id/gravityStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/gravity_start" />
+
+    <Button
+        android:id="@+id/gravityEnd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/gravity_end" />
+
+    <Button
+        android:id="@+id/minHeight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/set_minheight_100_dp" />
+
+    <Button
+        android:id="@+id/maxHeight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/set_maxheight_200_dp" />
+
+    <Button
+        android:id="@+id/minWidth"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/set_minwidth_100_dp" />
+
+    <Button
+        android:id="@+id/maxWidth"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/set_maxwidth_200_dp" />
+
+    <Button
+        android:id="@+id/padding0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/set_padding_0_dp" />
+
+    <Button
+        android:id="@+id/padding10"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/set_padding_10_dp" />
+
+    <Button
+        android:id="@+id/childPadding0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/set_child_padding_0_dp" />
+
+    <Button
+        android:id="@+id/childPadding10"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/set_child_padding_10_dp" />
+
+    <Button
+        android:id="@+id/childMargin0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/set_child_margin_0_dp" />
+
+    <Button
+        android:id="@+id/childMargin10"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:text="@string/set_child_margin_10_dp" />
+</com.wens.ui.layout.FlowLayout>

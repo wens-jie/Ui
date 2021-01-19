@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">UiExample</string>
+    <string name="random_give_child_a_width">Random give child a width</string>
+    <string name="set_maxwidth_200_dp">Set maxWidth 200 dp</string>
+    <string name="set_minwidth_100_dp">Set minWidth 100 dp</string>
+    <string name="set_maxheight_200_dp">Set maxHeight 200 dp</string>
+    <string name="random_give_child_a_height">Random give child a height</string>
+    <string name="gravity_center_horizontal">Gravity Center Horizontal</string>
+    <string name="gravity_center_vertical">Gravity Center Vertical</string>
+    <string name="gravity_top">Gravity Top</string>
+    <string name="gravity_bottom">Gravity Bottom</string>
+    <string name="gravity_start">Gravity Start</string>
+    <string name="gravity_end">Gravity End</string>
+    <string name="set_minheight_100_dp">Set minHeight 100 dp</string>
+    <string name="set_padding_0_dp">Set padding 0 dp</string>
+    <string name="set_padding_10_dp">Set padding 10 dp</string>
+    <string name="set_child_padding_0_dp">Set child padding 0 dp</string>
+    <string name="set_child_padding_10_dp">Set child padding 10 dp</string>
+    <string name="set_child_margin_0_dp">Set child margin 0 dp</string>
+    <string name="set_child_margin_10_dp">Set child margin 10 dp</string>
+</resources>
