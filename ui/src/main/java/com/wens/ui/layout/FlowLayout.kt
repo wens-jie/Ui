@@ -5,12 +5,14 @@ import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
 import android.view.*
-import android.widget.Scroller
+import android.widget.OverScroller
 import androidx.annotation.UiThread
+import androidx.customview.widget.ViewDragHelper.INVALID_POINTER
 import com.wens.ui.R
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * A layout that horizontally lay out children until the row is filled
@@ -61,6 +63,11 @@ open class FlowLayout(context: Context?, attrs: AttributeSet?, defStyleAttr: Int
         const val TAG = "Jie"
     }
 
+    private var mActivePointerId: Int = -1
+    private var mIsBeingDragged: Boolean = false
+    private val mMinimumVelocity: Int
+    private val mMaximumVelocity: Int
+
     //对齐方式
     var gravity: Int = Gravity.START
 
@@ -99,7 +106,7 @@ open class FlowLayout(context: Context?, attrs: AttributeSet?, defStyleAttr: Int
     private var maxChildWidth: Int = 0
 
     //最小滑动距离
-    private val mTouchSlop = ViewConfiguration.get(context).scaledPagingTouchSlop
+    private val mTouchSlop: Int
 
     //最后一次拦截事件的x值
     private var lastInterceptX: Float = 0f
@@ -110,9 +117,14 @@ open class FlowLayout(context: Context?, attrs: AttributeSet?, defStyleAttr: Int
     //最后一次触摸事件的y值
     private var lastTouchY: Int = 0
 
+    //最后一次按下事件的y值
     private var lastDownY: Int = 0
 
-    private val scroller = Scroller(context)
+    //弹性滑动
+    private val scroller = OverScroller(context)
+
+    //惯性控制
+    private var velocityTracker: VelocityTracker? = null
 
     constructor(context: Context?) : this(context, null, 0)
 
@@ -161,72 +173,173 @@ open class FlowLayout(context: Context?, attrs: AttributeSet?, defStyleAttr: Int
                 a.recycle()
             }
         }
+        val viewConfiguration = ViewConfiguration.get(context)
+        mMaximumVelocity = viewConfiguration.scaledMaximumFlingVelocity
+        mMinimumVelocity = viewConfiguration.scaledMinimumFlingVelocity
+        mTouchSlop = viewConfiguration.scaledPagingTouchSlop
     }
 
 
-    override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
-        var isIntercept = false
-        if (ev != null) {
-            val interceptX = ev.x
-            val interceptY = ev.y
-            when (ev.action) {
-                MotionEvent.ACTION_MOVE -> {
-                    val dx = interceptX - lastInterceptX
-                    val dy = interceptY - lastInterceptY
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        val action = ev.action
+        if (action == MotionEvent.ACTION_MOVE && mIsBeingDragged) {
+            return true
+        }
+        if (super.onInterceptTouchEvent(ev)) {
+            return true
+        }
+        if (scrollY == 0 && !canScrollVertically(1)) {
+            return false
+        }
+        when (action and MotionEvent.ACTION_MASK) {
+            MotionEvent.ACTION_MOVE -> {
+                val activePointerId: Int = mActivePointerId
+                if (activePointerId == INVALID_POINTER) {
+                    return mIsBeingDragged
+                }
+                val pointerIndex = ev.findPointerIndex(activePointerId)
+                if (pointerIndex == -1) {
+                    return mIsBeingDragged
+                }
+                val y = ev.getY(pointerIndex).toInt()
+                val yDiff: Int = abs(y - lastTouchY)
+                if (yDiff > mTouchSlop && View.SCROLL_AXIS_VERTICAL == 0) {
+                    mIsBeingDragged = true
+                    lastTouchY = y
+                    initVelocityTrackerIfNotExists()
+                    velocityTracker?.addMovement(ev)
+                    val parent = parent
                     parent?.requestDisallowInterceptTouchEvent(true)
-                    //竖向滑动
-                    if (abs(dy) > abs(dx) && abs(dy) > mTouchSlop) {
-                        isIntercept = true
-                    }
                 }
-                MotionEvent.ACTION_DOWN -> {
-                    lastInterceptX = interceptX
-                    lastInterceptY = interceptY
-                    lastTouchY = interceptY.toInt()
-                    lastDownY = interceptY.toInt()
-                    Log.e(TAG, "onInterceptTouchEvent: ACTION_DOWN")
+            }
+            MotionEvent.ACTION_DOWN -> {
+                lastTouchY = ev.y.toInt()
+                mActivePointerId = ev.getPointerId(0)
+                initOrResetVelocityTracker()
+                velocityTracker?.addMovement(ev)
+                scroller.computeScrollOffset()
+                mIsBeingDragged = !scroller.isFinished
+            }
+            MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
+                mIsBeingDragged = false
+                mActivePointerId = INVALID_POINTER
+                recycleVelocityTracker()
+                if (scroller.springBack(scrollX, scrollY, 0, 0, 0, getScrollRange())) {
+                    postInvalidateOnAnimation()
                 }
-                MotionEvent.ACTION_UP -> Log.e(TAG, "onInterceptTouchEvent: ACTION_UP")
+            }
+            MotionEvent.ACTION_POINTER_UP -> onSecondaryPointerUp(ev)
+        }
+        return mIsBeingDragged
+    }
+
+
+    private fun onSecondaryPointerUp(ev: MotionEvent) {
+        val pointerIndex = ev.action and MotionEvent.ACTION_POINTER_INDEX_MASK shr
+                MotionEvent.ACTION_POINTER_INDEX_SHIFT
+        val pointerId = ev.getPointerId(pointerIndex)
+        if (pointerId == mActivePointerId) {
+            val newPointerIndex = if (pointerIndex == 0) 1 else 0
+            lastTouchY = ev.getY(newPointerIndex).toInt()
+            mActivePointerId = ev.getPointerId(newPointerIndex)
+            if (velocityTracker != null) {
+                velocityTracker?.clear()
             }
         }
-        return isIntercept || super.onInterceptTouchEvent(ev)
+    }
+
+    private fun getScrollRange(): Int {
+        return contentHeight - measuredHeight + paddingTop + paddingBottom
+    }
+
+    private fun initOrResetVelocityTracker() {
+        if (velocityTracker == null) {
+            velocityTracker = VelocityTracker.obtain()
+        } else {
+            velocityTracker?.clear()
+        }
+    }
+
+    private fun initVelocityTrackerIfNotExists() {
+        if (velocityTracker == null) {
+            velocityTracker = VelocityTracker.obtain()
+        }
+    }
+
+    private fun recycleVelocityTracker() {
+        if (velocityTracker != null) {
+            velocityTracker?.recycle()
+            velocityTracker = null
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        val safeArea = contentHeight - measuredHeight + paddingTop + paddingBottom
+        val safeArea = getScrollRange()
         if (!scrollable || event == null || safeArea < 0) {
             return super.onTouchEvent(event)
         }
+        if (velocityTracker == null)
+            velocityTracker = VelocityTracker.obtain()
+        velocityTracker?.addMovement(event)
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                if (!scroller.isFinished) {
+                    scroller.abortAnimation()
+                    scroller.startScroll(0, scrollY, 0, 0)
+                }
                 lastTouchY = event.y.toInt()
-                Log.e(TAG, "onTouchEvent: ACTION_DOWN")
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
                 var dy = lastTouchY - event.y
                 lastTouchY = event.y.toInt()
-                val top = scroller.finalY + dy
-                if (top <= 0)
-                    dy = 0f - scroller.finalY
-                else if (top >= safeArea) {
-                    //可以滑动
-                    dy = safeArea.toFloat() - scroller.finalY
+                if (scrollY < -height || scrollY > safeArea + height) {
+                    dy = 0f
                 }
                 scroller.startScroll(0, scroller.finalY, 0, dy.toInt())
-                invalidate()
+                postInvalidateOnAnimation()
                 return true
             }
             MotionEvent.ACTION_UP -> {
-                Log.e(TAG, "onTouchEvent: ACTION_UP")
+                velocityTracker?.computeCurrentVelocity(1000, mMaximumVelocity.toFloat())
+                if (abs(velocityTracker!!.yVelocity) > mMinimumVelocity && scroller.finalY < safeArea && scroller.finalY > 0) {
+                    scroller.fling(
+                        scrollX,
+                        scrollY,
+                        0,
+                        -velocityTracker!!.yVelocity.roundToInt(),
+                        0,
+                        0,
+                        0,
+                        safeArea,
+                        0,
+                        safeArea / 4
+                    )
+                } else if (scroller.springBack(scrollX, scrollY, 0, 0, 0, safeArea)) {
+                    postInvalidateOnAnimation()
+                }
+                velocityTracker?.recycle()
+                velocityTracker = null
                 return if (isClickable && abs(lastDownY - event.y) < mTouchSlop && performClick())
                     true
                 else
-                    super.onTouchEvent(event)
+                    return super.onTouchEvent(event)
             }
-            else -> return super.onTouchEvent(event)
+
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                val index = event.actionIndex
+                lastTouchY = event.getY(index).toInt()
+                mActivePointerId = event.getPointerId(index)
+            }
+            MotionEvent.ACTION_POINTER_UP -> {
+                onSecondaryPointerUp(event)
+                return true
+            }
         }
+        velocityTracker?.recycle()
+        velocityTracker = null
+        return super.onTouchEvent(event)
     }
 
     override fun computeScroll() {
@@ -235,7 +348,6 @@ open class FlowLayout(context: Context?, attrs: AttributeSet?, defStyleAttr: Int
             scrollTo(0, scroller.currY)
             postInvalidate()
         }
-
     }
 
     @SuppressLint("RtlHardcoded")
